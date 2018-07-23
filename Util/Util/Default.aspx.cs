@@ -61,6 +61,56 @@ namespace Util
             }
         }
 
+         /* Active Directory - ref; https://www.codeproject.com/Articles/90142/Everything-in-Active-Directory-via-Csharp-NET-3-5-.aspx?display=Mobile */
+        private Boolean IsUserGroupValid(string groupName) //Check if a specific group exist
+        {
+            using (PrincipalContext ctx = new PrincipalContext(ContextType.Domain))
+            {
+                GroupPrincipal group = GroupPrincipal.FindByIdentity(ctx, groupName);
+                if (group != null)
+                {
+                    return true;
+                }
+                return false;
+            }
+        }
+        public static List<string> GetUserGroups(string NTID) //Retrieve user groups of a specific user
+        {
+            using (PrincipalContext ctx = new PrincipalContext(ContextType.Domain))
+            {
+                UserPrincipal user = UserPrincipal.FindByIdentity(ctx, NTID);
+                if (user != null)
+                {
+                    List<string> groupList = new List<string>();
+                    PrincipalSearchResult<Principal> groups = user.GetAuthorizationGroups();
+                    foreach (GroupPrincipal group in groups)
+                    {
+                        groupList.Add(group.ToString());
+                    }
+                    return groupList;
+                }
+                else
+                {
+                    return new List<string>();
+                }
+            }
+        }
+
+        private List<string> GetUsersInAGroup(string groupName) //Retrieve user list in a specific group
+        {
+            List<string> userList = new List<string>();
+            using (PrincipalContext ctx = new PrincipalContext(ContextType.Domain))
+            {
+                GroupPrincipal users = GroupPrincipal.FindByIdentity(ctx, groupName);
+                foreach (UserPrincipal user in users.GetMembers())
+                {
+                    userList.Add(user.SamAccountName);
+                }
+            }
+            return userList;
+        }
+
+        /* Text File Access */
         private List<string[]> ConvertTo2DArray(string path, char delimiter) //Convert CSV text file to 2D Array, 
         {
             List<string[]> fileContent = new List<string[]>();
@@ -71,12 +121,13 @@ namespace Util
                 while (!sr.EndOfStream)
                 {
                     string[] curLine = sr.ReadLine().Split(delimiter);
-                    fileContent.Add(curLine); 
+                    fileContent.Add(curLine);
                 }
             }
             return fileContent; //Access fileContent using fileContent[row index][column index]; 
         }
 
+        /* SQLite Database Access */
         private DataTable QueryResults(string commandText, SQLiteConnection conn) //Store results from query statement into DataTable
         {
             DataTable dt = new DataTable();
