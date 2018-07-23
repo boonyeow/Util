@@ -62,6 +62,32 @@ namespace Util
         }
 
          /* Active Directory - ref; https://www.codeproject.com/Articles/90142/Everything-in-Active-Directory-via-Csharp-NET-3-5-.aspx?display=Mobile */
+        public static void GetPropertyNames()
+        {
+            using (PrincipalContext ctx = new PrincipalContext(ContextType.Domain))
+            {
+                UserPrincipal user = UserPrincipal.FindByIdentity(ctx, "tanboony");
+                DirectoryEntry directoryEntry = user.GetUnderlyingObject() as DirectoryEntry;
+                foreach (PropertyValueCollection value in directoryEntry.Properties)
+                {
+                    Console.WriteLine(value.PropertyName.ToString());
+                }
+            }
+        }
+        public static string GetProperty(string propertyName, string NTID)
+        {
+            using (PrincipalContext ctx = new PrincipalContext(ContextType.Domain))
+            {
+                UserPrincipal user = UserPrincipal.FindByIdentity(ctx, NTID);
+                DirectoryEntry directoryEntry = user.GetUnderlyingObject() as DirectoryEntry;
+                if(directoryEntry.Properties.Contains(propertyName))
+                {
+                    return directoryEntry.Properties[propertyName].Value.ToString();
+                }
+                return "Not Found";
+            }
+        }
+        
         private Boolean IsUserGroupValid(string groupName) //Check if a specific group exist
         {
             using (PrincipalContext ctx = new PrincipalContext(ContextType.Domain))
