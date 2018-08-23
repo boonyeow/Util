@@ -196,5 +196,54 @@ namespace Util
 
             return s.ToString();
         }
+        
+        public List<List<string>> ConvertTo2DArray(string path, string delimiter) //Convert CSV text file to 2D Array, 
+        {
+            List<List<string>> fileContent = new List<List<string>>();
+            using (TextFieldParser parser = new TextFieldParser(path))
+            {
+                parser.SetDelimiters(delimiter);
+                parser.HasFieldsEnclosedInQuotes = true;
+                bool firstLine = true;
+
+                while (!parser.EndOfData)
+                {
+                    if (firstLine) //add column headers
+                    {
+                        firstLine = false;
+                        fileContent.Add(parser.ReadFields().ToList());
+                        continue;
+                    }
+
+                    try
+                    {
+                        List<string> dataList = parser.ReadFields().ToList();
+                        for (int i = 0; i < dataList.Count; i++)
+                        {
+                            if (dataList[i].Contains(","))
+                            {
+                                dataList[i] = "\"" + dataList[i] + "\"";
+                            }
+                        }
+                        fileContent.Add(dataList);
+                    }
+                    catch (MalformedLineException)
+                    {
+                        List<string> dataList = new List<string>();
+                        string sourceString = Regex.Replace(parser.ErrorLine, @"(?<!^|,)""(?!(,|$))", "$1'", RegexOptions.Multiline);
+                        dataList = (Regex.Split(sourceString, "(?:^|,)(\"(?:[^\"]+|\"\")*\"|[^,]*)").Where(exp => !String.IsNullOrEmpty(exp)).ToArray()).ToList();
+                        for (int i = 0; i < dataList.Count; i++)
+                        {
+                            if (dataList[i].Contains(","))
+                            {
+                                dataList[i] = "\"" + dataList[i] + "\"";
+                            }
+                        }
+                        fileContent.Add(dataList);
+                    }
+                }
+            }
+            return fileContent;
+        }
     }
 }
