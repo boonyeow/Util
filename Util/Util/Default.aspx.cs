@@ -245,5 +245,33 @@ namespace Util
             }
             return fileContent;
         }
+        
+        //dir searcher
+        using (PrincipalContext ctx = new PrincipalContext(ContextType.Domain))
+            {
+                UserPrincipal user = UserPrincipal.Current;
+                DirectoryEntry directoryEntry = user.GetUnderlyingObject() as DirectoryEntry;
+                DirectorySearcher dSearch = new DirectorySearcher(directoryEntry);
+                dSearch.Filter = "(&(objectClass=user)(samAccountName=" + user.SamAccountName + "))";
+                dSearch.PropertiesToLoad.Add("l");
+                dSearch.PropertiesToLoad.Add("department");
+                SearchResultCollection srCollection = dSearch.FindAll();
+                if (srCollection != null)
+                {
+                    foreach (SearchResult sr in dSearch.FindAll())
+                    {
+                        Response.Write(GetProperty(sr, "l"));
+                        Response.Write(GetProperty(sr, "department"));
+                    }
+                }
+            }
+        string GetProperty(SearchResult sr, string propertyName)
+        {
+            if (sr.Properties[propertyName] != null && sr.Properties[propertyName].Count > 0)
+            {
+                return sr.Properties[propertyName][0].ToString();
+            }
+            return "Unknown";
+        }
     }
 }
